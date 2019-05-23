@@ -55,4 +55,10 @@ private:
     QString token;
 };
 
+extern QString clientId;
+extern QString clientSecret;
+
+extern QString username;
+extern QString password;
+
 #endif // SESSIONCREATOR_H
