@@ -19,6 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include <QJsonDocument>
 #include <QtDebug>
 
+#include <queue>
+
+using namespace std;
+
+static queue <QJsonArray> receive_fifo;
 
 DataStreamExample::DataStreamExample(QObject *parent) : QObject(parent) {
     connect(&client, &CortexClient::connected, this, &DataStreamExample::onConnected);
@@ -38,6 +43,20 @@ void DataStreamExample::start(QString stream, QString license) {
     nextDataTime = 0;
     timerId = 0;
     client.open();
+}
+
+bool DataStreamExample::readFIFO(QJsonArray *data)
+{
+    if(!receive_fifo.empty())
+    {
+        QJsonArray temp = receive_fifo.front();
+
+        memcpy(data, &temp, sizeof(temp));
+
+        receive_fifo.pop();
+        return true;
+    }
+    else return false;
 }
 
 void DataStreamExample::onConnected() {
@@ -85,6 +104,14 @@ void DataStreamExample::onSubscribeOk(QString sid) {
 void DataStreamExample::onStreamDataReceived(
         QString sessionId, QString stream, double time, const QJsonArray &data) {
     Q_UNUSED(sessionId);
+
+    while(receive_fifo.size() >= MAX_FIFO_SIZE)
+    {
+        receive_fifo.pop();
+    }
+
+    receive_fifo.push(data);
+
     // a data stream can publish a lot of data
     // we display only a few data per second
     if (time >= nextDataTime) {
