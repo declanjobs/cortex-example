@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 using namespace std;
 
 static queue <QJsonArray> receive_fifo;
+int rcv_timeout = 10;
 
 DataStreamExample::DataStreamExample(QObject *parent) : QObject(parent) {
     connect(&client, &CortexClient::connected, this, &DataStreamExample::onConnected);
@@ -43,6 +44,16 @@ void DataStreamExample::start(QString stream, QString license) {
     nextDataTime = 0;
     timerId = 0;
     client.open();
+}
+
+void DataStreamExample::set_receive_timeout(int t)
+{
+    if(t == 0)
+    {
+        qInfo() << "Timeout is set to zero, streaming won't stop unless user interrupts.";
+    }
+
+    rcv_timeout = t;
 }
 
 bool DataStreamExample::readFIFO(QJsonArray *data)
@@ -97,8 +108,13 @@ void DataStreamExample::onSessionCreated(QString token, QString sessionId) {
 
 void DataStreamExample::onSubscribeOk(QString sid) {
     qInfo() << "Subscription successful, sid" << sid;
-    qInfo() << "Receiving data for 30 seconds.";
-    timerId = startTimer(30*1000);
+    qInfo() << "Receiving data for " << rcv_timeout << " seconds.";
+
+    if(rcv_timeout)
+    {
+        timerId = startTimer(rcv_timeout*1000);
+    }
+
 }
 
 void DataStreamExample::onStreamDataReceived(
@@ -107,18 +123,28 @@ void DataStreamExample::onStreamDataReceived(
 
     while(receive_fifo.size() >= MAX_FIFO_SIZE)
     {
+        qInfo() << "FIFO size" << receive_fifo.size();
+        qInfo() << stream << time << "Recieve FIFO overflow!";
         receive_fifo.pop();
     }
 
     receive_fifo.push(data);
 
+#ifdef DEBUG
     // a data stream can publish a lot of data
     // we display only a few data per second
+
     if (time >= nextDataTime) {
         qInfo() << stream << data;
         nextDataTime = time + 0.25;
     }
+#endif
 }
+
+void DataStreamExample::stop() {
+    client.unsubscribe(token, sessionId, stream);
+}
+
 
 void DataStreamExample::timerEvent(QTimerEvent *event) {
     if (event->timerId() == timerId) {
