@@ -36,6 +36,7 @@ public:
     QString label;
     QString connectedBy;
     QString status;
+//QJsonArray res;
 };
 
 #endif // HEADSET_H

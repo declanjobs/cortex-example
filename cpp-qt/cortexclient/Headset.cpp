@@ -13,7 +13,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 ***************/
 #include "Headset.h"
-
+#include <QtDebug>
 Headset::Headset() {
 }
 
@@ -26,6 +26,8 @@ void Headset::fromJson(const QJsonObject &jheadset) {
     label = jheadset["label"].toString();
     connectedBy = jheadset["connectedBy"].toString();
     status = jheadset["status"].toString();
+//res = jheadset["settings"].toArray();
+    qInfo() << "res " << jheadset["settings"];
 }
 
 QString Headset::toString() {
