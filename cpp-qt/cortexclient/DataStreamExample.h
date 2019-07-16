@@ -23,6 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #define MAX_FIFO_SIZE    1280
 
+#ifndef EOF
+#define EOF -128
+#endif
+
 /*
  * Connects to a headset and displays the data from a stream.
  *
